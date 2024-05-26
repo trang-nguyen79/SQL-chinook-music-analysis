@@ -13,7 +13,7 @@ Based on the list of discrete datasets to figure out the insights
 ### The Database Diagram
 The chinook database has 11 tables in it. You can visualize how the tables are related to each other in this diagram
 
-![The Database Diagram](Chinook Database Diagram.png)
+![The Database Diagram](https://github.com/trang-nguyen79/chinook-music-analysis/blob/main/Chinook%20Database%20Diagram.png)
 
 How to understand this database diagram
 
@@ -35,4 +35,4 @@ In this case study, I focus on using as many as posible the SQL syntax that I ha
 - Subqueries Function with CTE and CREATE TEMPORARY TABLE
 - Remark Statements with CASE
 
-![Please click here to check my detail analysis](the-analysis-narative)
+![Please click here to check my detail analysis]((https://github.com/trang-nguyen79/chinook-music-analysis/blob/main/the-analysis-narative))
