@@ -1,0 +1,312 @@
+-- Let's work with a dataset called chinook, which represents a digital media store and includes tables for artists, albums, media tracks, invoices, and customers.
+
+-- Overview all the tables
+SELECT *
+FROM chinook.albums
+LIMIT 10
+;
+
+SELECT *
+FROM chinook.artists
+LIMIT 10
+;
+
+SELECT *
+FROM chinook.customers
+LIMIT 10
+;
+
+SELECT *
+FROM employees
+LIMIT 10
+;
+
+SELECT *
+FROM genres
+LIMIT 10
+;
+
+SELECT *
+FROM invoice_items
+LIMIT 10
+;
+
+SELECT *
+FROM invoices
+ORDER BY InvoiceDate DESC
+;
+
+SELECT *
+FROM media_types
+LIMIT 10
+;
+
+SELECT *
+FROM playlist_track
+LIMIT 10
+;
+
+SELECT *
+FROM playlists
+LIMIT 10
+;
+
+SELECT *
+FROM tracks
+LIMIT 10
+;
+
+
+-- Let create a database diagram to have an overview the relationship among these tables. Please the the file "Chinook Database Diagram" in this repository.
+
+-- After looking at the diagram of the database, I jump in to the analysis
+
+-- A. Analysis about the performance and market trend
+-- 1. Top 50 trackId contribute the highest revenue for the company
+
+SELECT invoice_items.TrackId, invoices.Total
+FROM invoice_items
+
+JOIN invoices
+ON invoice_items.InvoiceId = invoices.InvoiceId
+
+ORDER BY invoices.Total DESC
+LIMIT 50
+;
+
+-- 2. Which Albums had the highest revenue all the time?
+SELECT albums.Title, invoices.Total
+FROM albums
+
+LEFT JOIN tracks
+ON albums.AlbumId = tracks.AlbumId
+
+LEFT JOIN invoice_items
+ON tracks.TrackId = invoice_items.TrackId
+
+LEFT JOIN invoices
+ON invoice_items.InvoiceId = invoices.InvoiceId
+
+WHERE invoices.Total > 25
+ORDER BY albums.Title
+;
+
+-- 3. How many customers made purchase in the last quarter of 2013
+SELECT CustomerId, InvoiceDate
+FROM invoices
+WHERE InvoiceDate like '2013-12%'
+OR InvoiceDate like '2013-11%'
+OR InvoiceDate like '2013-10%'
+;
+--
+WITH customer_q4 AS
+(
+SELECT invoices.CustomerId
+FROM invoices
+WHERE invoices.InvoiceDate like '2013-12%'
+OR invoices.InvoiceDate like '2013-11%'
+OR invoices.InvoiceDate like '2013-10%'
+)
+SELECT COUNT(*)
+FROM customer_q4;
+
+-- 4. Top 5 genres contribute the highest revenue for the company: dataset genres, tracks, invoice_items
+
+SELECT genres.Name, COUNT(invoices.InvoiceId) AS num_purchase, SUM(invoices.Total) AS total_revenue
+FROM genres
+
+LEFT JOIN tracks
+ON tracks.GenreId = genres.GenreId
+
+LEFT JOIN invoice_items
+ON INVOICE_ITEMS.TrackId = tracks.TrackId
+
+LEFT JOIN invoices
+ON invoices.InvoiceId = invoice_items.InvoiceId
+
+GROUP BY genres.Name
+ORDER BY total_revenue DESC
+LIMIT 5
+;
+
+-- 5. Which genres are listened the most in the last quarter of 2013: genres, tracks, invoice_items, invoices
+
+SELECT genres.Name, COUNT(invoices.InvoiceId) AS num_purchase
+FROM genres
+
+LEFT JOIN tracks
+ON tracks.GenreId = genres.GenreId
+
+LEFT JOIN invoice_items
+ON INVOICE_ITEMS.TrackId = tracks.TrackId
+
+LEFT JOIN invoices
+ON invoices.InvoiceId = invoice_items.InvoiceId
+
+WHERE invoices.InvoiceDate like '2013-12%'
+OR invoices.InvoiceDate like '2013-11%'
+OR invoices.InvoiceDate like '2013-10%'
+
+GROUP BY genres.Name
+ORDER BY num_purchase DESC
+;
+
+-- 6. How many Invoices were there in 2013?
+SELECT COUNT (InvoiceId)
+FROM invoices
+WHERE InvoiceDate like '2013%'
+; 
+
+-- 7. What are the total sales for 2013?
+SELECT SUM(Total) AS Total_Revenue_2013
+FROM Invoices
+WHERE InvoiceDate like '2013%'
+;
+
+
+--11.Write a query that includes the purchased track name AND artist name with each invoice line ID.
+SELECT invoice_items.invoiceLineId, tracks.Name AS track_name, artists.Name AS artist_name
+FROM tracks
+
+LEFT JOIN invoice_items
+ON invoice_items.TrackId = tracks.TrackId
+
+LEFT JOIN albums
+ON tracks.AlbumId = albums.AlbumId
+
+LEFT JOIN artists
+ON albums.ArtistId = artists.Name
+;
+
+SELECT artists.Name AS artist_name, tracks.Name AS track_name, invoice_items.invoiceLineId
+FROM artists
+
+LEFT JOIN albums
+ON albums.ArtistId = artists.Name 
+
+LEFT JOIN tracks
+ON tracks.AlbumId = albums.AlbumId
+
+LEFT JOIN invoice_items
+ON invoice_items.TrackId = tracks.TrackId
+;
+
+-- 8.Provide a query that shows all the Tracks, and include the Album name, Media type, and Genre.
+WITH CTE_tracks AS
+(
+SELECT tracks.Name, me.Name AS MediaType, genres.Name AS genres, tracks.AlbumId
+FROM tracks
+
+LEFT JOIN media_types AS me
+ON me.MediaTypeId = tracks.MediaTypeId
+
+LEFT JOIN genres
+ON genres.GenreId = TRACKS.GenreId
+)
+SELECT cte.Name, cte.MediaType, cte.genres, albums.Title
+FROM CTE_tracks cte
+
+LEFT JOIN albums
+ON cte.AlbumId = albums.AlbumId
+;
+
+-- B. Analysis on customer's demographic
+-- 1. Show Customers (their full names, customer ID, and country) who are not in the US. (
+SELECT CustomerId, Country,
+FirstName || ' ' || LastName AS FullName
+FROM customers
+;
+
+SELECT CustomerId, Country,
+FirstName || ' ' || LastName AS FullName
+FROM customers
+WHERE Country != 'USA'
+ORDER BY Country
+;
+
+-- 2. Show only the Customers from Brazil.
+SELECT CustomerId, Country,
+FirstName || ' ' || LastName AS FullName
+FROM customers
+WHERE Country = 'Brazil'
+;
+
+-- 3. Find the Invoices of customers who are from Brazil. The resulting table should show the customer's full name, Invoice ID, Date of the invoice, and billing country.
+SELECT invoices.InvoiceId, invoices.InvoiceDate, invoices.BillingCountry, customers.FirstName || ' ' || LastName AS FullName
+FROM invoices
+
+INNER JOIN customers
+ON customers.CustomerId = invoices.CustomerId
+
+WHERE invoices.BillingCountry = 'Brazil'
+;
+
+-- 4. Find a unique/distinct list of billing countries from the Invoice table.
+SELECT DISTINCT BillingCountry
+FROM invoices
+;
+
+
+-- C. Sales Agents' performance
+-- 1. Show the Employees who are Sales Agents.
+SELECT FirstName || ' ' || LastName AS FullName
+FROM employees
+WHERE Title = 'Sales Support Agent'
+;
+
+-- 2. Provide a query that shows the invoices associated with each sales agent. The resulting table should include the Sales Agent's full name.
+SELECT invoices.invoiceId, employees.FirstName || ' ' || employees.LastName AS FullName
+FROM invoices
+
+LEFT JOIN customers
+ON invoices.CustomerId = customers.CustomerId
+
+LEFT JOIN employees
+ON customers.SupportRepId = employees.EmployeeId
+
+ORDER BY FullName
+;
+
+-- 3. Show the Invoice Total, Customer name, Country, and Sales Agent name for all invoices and customers.
+SELECT customers.FirstName || ' ' || customers.LastName AS CustomerName, customers.Country, employees.FirstName || ' ' || employees.LastName AS EmployeeName, SUM(invoices.Total) as TotalSpend
+FROM invoices
+
+LEFT JOIN customers
+ON invoices.CustomerId = customers.CustomerId
+
+LEFT JOIN employees
+ON customers.SupportRepId = employees.EmployeeId
+
+GROUP BY CustomerName
+ORDER BY CustomerName
+;
+
+
+-- 4.Show the total sales made by each sales agent.
+SELECT SUM(invoices.Total) AS Total_Revenue_by_agent, employees.FirstName || ' ' || employees.LastName AS employeeName
+FROM invoices
+
+JOIN customers
+ON invoices.CustomerId = customers.CustomerId
+
+JOIN employees
+ON customers.SupportRepId = employees.EmployeeId
+
+GROUP BY employeeName
+;
+
+-- 5.Which sales agent made the most dollars in sales in 2013?
+SELECT SUM(invoices.Total) AS Total_Revenue_by_agent, employees.FirstName || ' ' || employees.LastName AS employeeName
+FROM invoices
+
+JOIN customers
+ON invoices.CustomerId = customers.CustomerId
+
+JOIN employees
+ON customers.SupportRepId = employees.EmployeeId
+
+WHERE invoices.InvoiceDate like '2013%'
+GROUP BY employeeName
+ORDER BY Total_Revenue_by_agent DESC
+LIMIT 1
+;
