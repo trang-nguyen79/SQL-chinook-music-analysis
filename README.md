@@ -35,4 +35,4 @@ In this case study, I focus on using as many as posible the SQL syntax that I ha
 - Subqueries Function with CTE and CREATE TEMPORARY TABLE
 - Remark Statements with CASE
 
-![Please click here to check my detail analysis]((https://github.com/trang-nguyen79/chinook-music-analysis/blob/main/the-analysis-narative))
+![Please click here to check my detail analysis](https://github.com/trang-nguyen79/SQL-chinook-music-analysis/blob/main/the-analysis-narative)
